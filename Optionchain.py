@@ -94,7 +94,7 @@ def on_open(ws):
     print("WebSocket Connected")
 
     login = {
-        "t": "c",
+        "t": "a",
         "uid": CLIENT_ID,
         "actid": CLIENT_ID,
         "accesstoken": TOKEN,
