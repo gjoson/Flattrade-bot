@@ -54,7 +54,12 @@ def get_chain_tokens(atm):
     r = requests.post(CHAIN_URL,data=body,headers=HEADERS)
 
     data = r.json()
+    # Debug print
+    print("CHAIN RESPONSE:", data)
 
+    if "values" not in data:
+        print("Option chain error:",data)
+        return[]
     tokens = []
 
     for row in data["values"]:
@@ -89,7 +94,7 @@ def on_open(ws):
     print("WebSocket Connected")
 
     login = {
-        "t": "a",
+        "t": "c",
         "uid": CLIENT_ID,
         "actid": CLIENT_ID,
         "accesstoken": TOKEN,
@@ -104,12 +109,14 @@ def on_message(ws,message):
     
     data = json.loads(message)
 
-    if data.get("t") == "ak":
+    if data.get("t") == "ck":
 
         print("Login success")
 
         tokens = get_chain_tokens(ATM)
-
+        if not tokens:
+            print("No tokens received")
+            return
         sub = {
             "t":"t",
             "k":"#".join(tokens)
@@ -148,7 +155,7 @@ def on_close(ws,a,b):
 
 nifty = get_nifty()
 
-ATM = round(nifty/50)*50
+ATM = int(round(nifty/50)*50)
 
 print("NIFTY:",nifty,"ATM:",ATM)
 
