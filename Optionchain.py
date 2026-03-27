@@ -1,169 +1,166 @@
 import requests
 import json
 import time
-import csv
+import math
 from datetime import datetime
 
 CLIENT_ID = "FZ37970"
 TOKEN = open("token.txt").read().strip()
 
-QUOTE_URL = "https://piconnect.flattrade.in/PiConnectAPI/GetQuotes"
+URL = "https://piconnect.flattrade.in/PiConnectAPI/GetOptionChain"
 
-MASTER_FILE = "Nfo_Index_Derivatives.csv"
+RISK_FREE = 0.06
 
-# -----------------------------
-# load nearest weekly expiry
-# -----------------------------
+# ---------- Normal distribution ----------
 
-def load_tokens():
+def N(x):
+    return 0.5 * (1 + math.erf(x / math.sqrt(2)))
 
-    expiries = set()
+def N_prime(x):
+    return math.exp(-0.5 * x * x) / math.sqrt(2 * math.pi)
 
-    with open(MASTER_FILE) as f:
+# ---------- Black76 pricing ----------
 
-        reader = csv.DictReader(f)
+def black76_price(F, K, T, sigma, r, call=True):
 
-        for row in reader:
+    if sigma <= 0:
+        return 0
 
-            if row["Symbol"] == "NIFTY" and row["Optiontype"] in ("CE","PE"):
+    d1 = (math.log(F/K) + 0.5*sigma*sigma*T) / (sigma*math.sqrt(T))
+    d2 = d1 - sigma*math.sqrt(T)
 
-                expiry = row["Expiry"]
-
-                expiry_date = datetime.strptime(expiry,"%d-%b-%Y")
-
-                if expiry_date.date() >= datetime.now().date():
-                    expiries.add(expiry)
-
-    # convert to datetime for sorting
-    expiry_dates = [(datetime.strptime(e,"%d-%b-%Y"),e) for e in expiries]
-
-    nearest_expiry = min(expiry_dates)[1]
-
-    print("Nearest expiry:",nearest_expiry)
-
-    strike_map = {}
-
-    with open(MASTER_FILE) as f:
-
-        reader = csv.DictReader(f)
-
-        for row in reader:
-
-            if row["Symbol"] != "NIFTY":
-                continue
-
-            if row["Expiry"] != nearest_expiry:
-                continue
-
-            opt = row["Optiontype"]
-
-            if opt not in ("CE","PE"):
-                continue
-
-            strike = int(float(row["Strike"]))
-
-            token = row["Token"]
-
-            if strike not in strike_map:
-                strike_map[strike] = {}
-
-            strike_map[strike][opt] = token
-
-    return strike_map
+    if call:
+        return math.exp(-r*T) * (F*N(d1) - K*N(d2))
+    else:
+        return math.exp(-r*T) * (K*N(-d2) - F*N(-d1))
 
 
-# -----------------------------
-# get nifty price
-# -----------------------------
+# ---------- Implied volatility ----------
 
-def get_nifty_price():
+def implied_vol(price, F, K, T, r, call=True):
 
-    jdata = {
-        "uid": CLIENT_ID,
-        "exch": "NSE",
-        "token": "26000"
-    }
+    sigma = 0.2
+
+    for _ in range(20):
+
+        d1 = (math.log(F/K) + 0.5*sigma*sigma*T) / (sigma*math.sqrt(T))
+
+        price_est = black76_price(F,K,T,sigma,r,call)
+
+        vega = F * math.exp(-r*T) * N_prime(d1) * math.sqrt(T)
+
+        if vega == 0:
+            return None
+
+        sigma = sigma - (price_est - price) / vega
+
+        if abs(price_est - price) < 0.0001:
+            return sigma
+
+    return sigma
+
+
+# ---------- Greeks ----------
+
+def greeks(F, K, T, sigma, r):
+
+    d1 = (math.log(F/K) + 0.5*sigma*sigma*T) / (sigma*math.sqrt(T))
+    d2 = d1 - sigma*math.sqrt(T)
+
+    delta = math.exp(-r*T) * N(d1)
+    gamma = math.exp(-r*T) * N_prime(d1) / (F*sigma*math.sqrt(T))
+    vega = F * math.exp(-r*T) * N_prime(d1) * math.sqrt(T)
+    theta = -(F*sigma*math.exp(-r*T)*N_prime(d1))/(2*math.sqrt(T))
+
+    return delta,gamma,vega,theta
+
+
+# ---------- Time to expiry ----------
+
+def time_to_expiry(expiry):
+
+    expiry_dt = datetime.strptime(expiry,"%d-%b-%Y")
+
+    now = datetime.now()
+
+    T = (expiry_dt-now).total_seconds()/(365*24*3600)
+
+    return max(T,0.0001)
+
+
+# ---------- Main loop ----------
+
+jdata = {
+    "uid": CLIENT_ID,
+    "exch": "NFO",
+    "symbol": "NIFTY"
+}
+
+while True:
 
     body = f"jData={json.dumps(jdata)}&jKey={TOKEN}"
 
     r = requests.post(
-        QUOTE_URL,
+        URL,
         data=body,
         headers={"Content-Type":"application/x-www-form-urlencoded"}
     )
 
     data = r.json()
 
-    return float(data["lp"])
+    if "values" not in data:
+        print("No data from API")
+        time.sleep(3)
+        continue
 
+    nifty = float(data["spot"])
 
-# -----------------------------
-# get option data
-# -----------------------------
+    atm = round(nifty/50)*50
 
-def get_option(token):
+    expiry = data["expiry"]
 
-    jdata = {
-        "uid": CLIENT_ID,
-        "exch": "NFO",
-        "token": token
-    }
+    T = time_to_expiry(expiry)
 
-    body = f"jData={json.dumps(jdata)}&jKey={TOKEN}"
+    print("\nNIFTY:",nifty,"ATM:",atm)
+    print("Strike  CE_LTP  CE_IV  CE_DELTA  PE_LTP  PE_IV  PE_DELTA")
 
-    r = requests.post(
-        QUOTE_URL,
-        data=body,
-        headers={"Content-Type":"application/x-www-form-urlencoded"}
-    )
+    for row in data["values"]:
 
-    return r.json()
+        strike = float(row["strike"])
 
-
-# -----------------------------
-# main
-# -----------------------------
-
-strike_map = load_tokens()
-
-while True:
-
-    price = get_nifty_price()
-
-    atm = round(price/50)*50
-
-    print("\nNIFTY:",price,"ATM:",atm)
-    print("Strike  CE_LTP  CE_IV  CE_DELTA   PE_LTP  PE_IV  PE_DELTA")
-
-    for i in range(-10,11):
-
-        strike = atm + i*50
-
-        if strike not in strike_map:
+        if abs(strike-atm) > 500:
             continue
 
-        ce_token = strike_map[strike].get("CE")
-        pe_token = strike_map[strike].get("PE")
+        ce_ltp = row["call_ltp"]
+        pe_ltp = row["put_ltp"]
 
-        ce = get_option(ce_token)
-        pe = get_option(pe_token)
+        ce_iv = None
+        pe_iv = None
+        ce_delta = None
+        pe_delta = None
 
-        ce_ltp = ce.get("lp")
-        ce_iv = ce.get("iv")
-        ce_delta = ce.get("delta")
+        if ce_ltp:
 
-        pe_ltp = pe.get("lp")
-        pe_iv = pe.get("iv")
-        pe_delta = pe.get("delta")
+            ce_iv = implied_vol(ce_ltp,nifty,strike,T,RISK_FREE,True)
+
+            if ce_iv:
+                ce_delta,_,_,_ = greeks(nifty,strike,T,ce_iv,RISK_FREE)
+
+        if pe_ltp:
+
+            pe_iv = implied_vol(pe_ltp,nifty,strike,T,RISK_FREE,False)
+
+            if pe_iv:
+                pe_delta,_,_,_ = greeks(nifty,strike,T,pe_iv,RISK_FREE)
 
         print(
-            strike,
+            int(strike),
             ce_ltp,
-            ce_iv,
-            ce_delta,
+            round(ce_iv,3) if ce_iv else None,
+            round(ce_delta,3) if ce_delta else None,
             pe_ltp,
-            pe_iv,
-            pe_delta
+            round(pe_iv,3) if pe_iv else None,
+            round(pe_delta,3) if pe_delta else None
         )
 
-    time.sleep(5)
+    time.sleep(3)
