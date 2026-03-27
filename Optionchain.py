@@ -1,166 +1,161 @@
 import requests
 import json
 import time
-import math
-from datetime import datetime
+import websocket
+import threading
 
 CLIENT_ID = "FZ37970"
 TOKEN = open("token.txt").read().strip()
 
-URL = "https://piconnect.flattrade.in/PiConnectAPI/GetOptionChain"
+QUOTE_URL = "https://piconnect.flattrade.in/PiConnectAPI/GetQuotes"
+CHAIN_URL = "https://piconnect.flattrade.in/PiConnectAPI/GetOptionChain"
 
-RISK_FREE = 0.06
+HEADERS = {"Content-Type":"application/x-www-form-urlencoded"}
 
-# ---------- Normal distribution ----------
+WS_URL = "wss://piconnect.flattrade.in/PiConnectAPI/"
 
-def N(x):
-    return 0.5 * (1 + math.erf(x / math.sqrt(2)))
+# -------------------------
+# Get NIFTY price
+# -------------------------
 
-def N_prime(x):
-    return math.exp(-0.5 * x * x) / math.sqrt(2 * math.pi)
+def get_nifty():
 
-# ---------- Black76 pricing ----------
-
-def black76_price(F, K, T, sigma, r, call=True):
-
-    if sigma <= 0:
-        return 0
-
-    d1 = (math.log(F/K) + 0.5*sigma*sigma*T) / (sigma*math.sqrt(T))
-    d2 = d1 - sigma*math.sqrt(T)
-
-    if call:
-        return math.exp(-r*T) * (F*N(d1) - K*N(d2))
-    else:
-        return math.exp(-r*T) * (K*N(-d2) - F*N(-d1))
-
-
-# ---------- Implied volatility ----------
-
-def implied_vol(price, F, K, T, r, call=True):
-
-    sigma = 0.2
-
-    for _ in range(20):
-
-        d1 = (math.log(F/K) + 0.5*sigma*sigma*T) / (sigma*math.sqrt(T))
-
-        price_est = black76_price(F,K,T,sigma,r,call)
-
-        vega = F * math.exp(-r*T) * N_prime(d1) * math.sqrt(T)
-
-        if vega == 0:
-            return None
-
-        sigma = sigma - (price_est - price) / vega
-
-        if abs(price_est - price) < 0.0001:
-            return sigma
-
-    return sigma
-
-
-# ---------- Greeks ----------
-
-def greeks(F, K, T, sigma, r):
-
-    d1 = (math.log(F/K) + 0.5*sigma*sigma*T) / (sigma*math.sqrt(T))
-    d2 = d1 - sigma*math.sqrt(T)
-
-    delta = math.exp(-r*T) * N(d1)
-    gamma = math.exp(-r*T) * N_prime(d1) / (F*sigma*math.sqrt(T))
-    vega = F * math.exp(-r*T) * N_prime(d1) * math.sqrt(T)
-    theta = -(F*sigma*math.exp(-r*T)*N_prime(d1))/(2*math.sqrt(T))
-
-    return delta,gamma,vega,theta
-
-
-# ---------- Time to expiry ----------
-
-def time_to_expiry(expiry):
-
-    expiry_dt = datetime.strptime(expiry,"%d-%b-%Y")
-
-    now = datetime.now()
-
-    T = (expiry_dt-now).total_seconds()/(365*24*3600)
-
-    return max(T,0.0001)
-
-
-# ---------- Main loop ----------
-
-jdata = {
-    "uid": CLIENT_ID,
-    "exch": "NFO",
-    "symbol": "NIFTY"
-}
-
-while True:
+    jdata = {
+        "uid": CLIENT_ID,
+        "exch": "NSE",
+        "token": "26000"
+    }
 
     body = f"jData={json.dumps(jdata)}&jKey={TOKEN}"
 
-    r = requests.post(
-        URL,
-        data=body,
-        headers={"Content-Type":"application/x-www-form-urlencoded"}
-    )
+    r = requests.post(QUOTE_URL,data=body,headers=HEADERS)
 
     data = r.json()
-    print(json.dumps(data, indent=2))
-    if "values" not in data:
-        print("No data from API")
-        time.sleep(3)
-        continue
 
-    nifty = float(data["spot"])
+    return float(data["lp"])
 
-    atm = round(nifty/50)*50
 
-    expiry = data["expiry"]
+# -------------------------
+# Get option chain tokens
+# -------------------------
 
-    T = time_to_expiry(expiry)
+def get_chain_tokens(atm):
 
-    print("\nNIFTY:",nifty,"ATM:",atm)
-    print("Strike  CE_LTP  CE_IV  CE_DELTA  PE_LTP  PE_IV  PE_DELTA")
+    jdata = {
+        "uid": CLIENT_ID,
+        "exch": "NFO",
+        "tsym": "NIFTY",
+        "strprc": str(atm),
+        "cnt": "10"
+    }
+
+    body = f"jData={json.dumps(jdata)}&jKey={TOKEN}"
+
+    r = requests.post(CHAIN_URL,data=body,headers=HEADERS)
+
+    data = r.json()
+
+    tokens = []
 
     for row in data["values"]:
+        tokens.append("NFO|" + row["token"])
 
-        strike = float(row["strike"])
+    return tokens
 
-        if abs(strike-atm) > 500:
-            continue
 
-        ce_ltp = row["call_ltp"]
-        pe_ltp = row["put_ltp"]
+# -------------------------
+# Heartbeat
+# -------------------------
 
-        ce_iv = None
-        pe_iv = None
-        ce_delta = None
-        pe_delta = None
+def heartbeat(ws):
 
-        if ce_ltp:
+    while True:
 
-            ce_iv = implied_vol(ce_ltp,nifty,strike,T,RISK_FREE,True)
+        time.sleep(30)
 
-            if ce_iv:
-                ce_delta,_,_,_ = greeks(nifty,strike,T,ce_iv,RISK_FREE)
+        ping = {
+            "t": "h"
+        }
 
-        if pe_ltp:
+        ws.send(json.dumps(ping))
 
-            pe_iv = implied_vol(pe_ltp,nifty,strike,T,RISK_FREE,False)
 
-            if pe_iv:
-                pe_delta,_,_,_ = greeks(nifty,strike,T,pe_iv,RISK_FREE)
+# -------------------------
+# WebSocket callbacks
+# -------------------------
 
-        print(
-            int(strike),
-            ce_ltp,
-            round(ce_iv,3) if ce_iv else None,
-            round(ce_delta,3) if ce_delta else None,
-            pe_ltp,
-            round(pe_iv,3) if pe_iv else None,
-            round(pe_delta,3) if pe_delta else None
-        )
+def on_open(ws):
 
-    time.sleep(3)
+    print("WebSocket Connected")
+
+    login = {
+        "t": "c",
+        "uid": CLIENT_ID,
+        "actid": CLIENT_ID,
+        "susertoken": TOKEN
+    }
+
+    ws.send(json.dumps(login))
+
+
+def on_message(ws,message):
+
+    data = json.loads(message)
+
+    if data.get("t") == "ck":
+
+        print("Login success")
+
+        tokens = get_chain_tokens(ATM)
+
+        sub = {
+            "t":"t",
+            "k":"#".join(tokens)
+        }
+
+        ws.send(json.dumps(sub))
+
+        print("Subscribed:",len(tokens),"tokens")
+
+        threading.Thread(target=heartbeat,args=(ws,),daemon=True).start()
+
+
+    if data.get("lp"):
+
+        strike = data.get("strprc")
+        ltp = data.get("lp")
+        iv = data.get("iv")
+        delta = data.get("delta")
+
+        print(strike,ltp,iv,delta)
+
+
+def on_error(ws,error):
+
+    print("WS ERROR:",error)
+
+
+def on_close(ws,a,b):
+
+    print("WebSocket Closed")
+
+
+# -------------------------
+# MAIN
+# -------------------------
+
+nifty = get_nifty()
+
+ATM = round(nifty/50)*50
+
+print("NIFTY:",nifty,"ATM:",ATM)
+
+ws = websocket.WebSocketApp(
+    WS_URL,
+    on_open=on_open,
+    on_message=on_message,
+    on_error=on_error,
+    on_close=on_close
+)
+
+ws.run_forever()
