@@ -102,7 +102,7 @@ def get_chain_tokens(atm):
 
     for row in data["values"]:
 
-        strike = int(row["strprc"])
+        strike = int(float(row["strprc"]))
 
         ce = row["call_token"]
         pe = row["put_token"]
