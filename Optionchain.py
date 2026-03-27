@@ -104,9 +104,9 @@ def get_chain_tokens(atm):
 
         strike = int(float(row["strprc"]))
 
-        ce = row["call_token"]
-        pe = row["put_token"]
-
+    token = row["token"]
+    opttype = row["optt"]   # CE or PE
+    if strike not in option_chain:
         option_chain[strike] = {
             "CE_LTP":None,
             "CE_IV":None,
@@ -116,11 +116,9 @@ def get_chain_tokens(atm):
             "PE_DELTA":None
         }
 
-        token_to_strike[ce] = (strike,"CE")
-        token_to_strike[pe] = (strike,"PE")
+        token_to_strike[token] = (strike,opttype)
 
-        tokens.append("NFO|" + ce)
-        tokens.append("NFO|" + pe)
+        tokens.append("NFO|" + token)
 
     return tokens
 
