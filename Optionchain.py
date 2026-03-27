@@ -12,7 +12,7 @@ CHAIN_URL = "https://piconnect.flattrade.in/PiConnectAPI/GetOptionChain"
 
 HEADERS = {"Content-Type":"application/x-www-form-urlencoded"}
 
-WS_URL = "wss://piconnect.flattrade.in/PiConnectAPI/"
+WS_URL = "wss://piconnect.flattrade.in/PiConnectWSAPI/"
 
 # -------------------------
 # Get NIFTY price
@@ -92,7 +92,7 @@ def on_open(ws):
         "t": "c",
         "uid": CLIENT_ID,
         "actid": CLIENT_ID,
-        "susertoken": TOKEN
+        "accesstoken": TOKEN
     }
 
     ws.send(json.dumps(login))
