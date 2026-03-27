@@ -34,7 +34,19 @@ def callback():
 
     print("TOKEN RESPONSE:", data)
 
-    return str(data)
+    if data.get("stat") == "Ok":
+        token = data["token"]
+
+        # Save token automatically
+        with open("token.txt", "w") as f:
+            f.write(token)
+
+        print("Token saved to token.txt")
+
+        return "Login success. Token saved."
+
+    else:
+        return "Login failed: " + str(data)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80)
