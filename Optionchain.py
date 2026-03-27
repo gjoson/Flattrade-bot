@@ -47,7 +47,7 @@ def get_chain_tokens(atm):
     jdata = {
         "uid": CLIENT_ID,
         "exch": "NFO",
-        "tsym": "NIFTY",
+        "tsym": "NIFTY INDEX",
         "strprc": str(atm),
         "cnt": "10"
     }
