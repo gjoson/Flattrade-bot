@@ -93,7 +93,7 @@ def get_chain_tokens(atm):
     r = requests.post(CHAIN_URL,data=body,headers=HEADERS)
 
     data = r.json()
-  print("Unique strikes:", len(option_chain))
+    print("Unique strikes:", len(option_chain))
     tokens = []
 
     if "values" not in data:
