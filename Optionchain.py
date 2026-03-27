@@ -89,7 +89,7 @@ def on_open(ws):
     print("WebSocket Connected")
 
     login = {
-        "t": "c",
+        "t": "a",
         "uid": CLIENT_ID,
         "actid": CLIENT_ID,
         "accesstoken": TOKEN,
@@ -104,7 +104,7 @@ def on_message(ws,message):
     
     data = json.loads(message)
 
-    if data.get("t") == "ck":
+    if data.get("t") == "ak":
 
         print("Login success")
 
