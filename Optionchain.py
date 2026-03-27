@@ -27,16 +27,19 @@ def load_tokens():
 
             if row["Symbol"] == "NIFTY" and row["Optiontype"] in ("CE","PE"):
 
-                expiry = datetime.strptime(row["Expiry"],"%d-%b-%Y")
+                expiry = row["Expiry"]
 
-                if expiry.date() >= datetime.now().date():
+                expiry_date = datetime.strptime(expiry,"%d-%b-%Y")
+
+                if expiry_date.date() >= datetime.now().date():
                     expiries.add(expiry)
 
-    nearest_expiry = min(expiries)
+    # convert to datetime for sorting
+    expiry_dates = [(datetime.strptime(e,"%d-%b-%Y"),e) for e in expiries]
 
-    expiry_str = nearest_expiry.strftime("%d-%b-%Y")
+    nearest_expiry = min(expiry_dates)[1]
 
-    print("Nearest expiry:",expiry_str)
+    print("Nearest expiry:",nearest_expiry)
 
     strike_map = {}
 
