@@ -164,3 +164,4 @@ while True:
         )
 
     time.sleep(3)
+print(json.dumps(data, indent=2))
