@@ -127,20 +127,6 @@ def get_chain_tokens(atm):
 # Print Option Chain
 # -----------------------------------
 
-strike, side = token_to_strike[token]
-
-if side == "CE":
-
-    option_chain[strike]["CE_LTP"] = data.get("lp")
-    option_chain[strike]["CE_IV"] = data.get("iv")
-    option_chain[strike]["CE_DELTA"] = data.get("delta")
-
-else:
-
-    option_chain[strike]["PE_LTP"] = data.get("lp")
-    option_chain[strike]["PE_IV"] = data.get("iv")
-    option_chain[strike]["PE_DELTA"] = data.get("delta")
-
 def display_loop():
 
     while True:
@@ -229,6 +215,8 @@ def on_message(ws,message):
 
         if token not in token_to_strike:
             return
+
+        strike, side = token_to_strike[token]
 
         if side == "CE":
 
