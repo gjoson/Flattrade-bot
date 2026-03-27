@@ -107,7 +107,7 @@ while True:
     )
 
     data = r.json()
-
+    print(json.dumps(data, indent=2))
     if "values" not in data:
         print("No data from API")
         time.sleep(3)
@@ -164,4 +164,3 @@ while True:
         )
 
     time.sleep(3)
-print(json.dumps(data, indent=2))
