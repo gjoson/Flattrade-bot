@@ -45,8 +45,13 @@ def callback():
 
         return "Login success. Token saved."
 
-    else:
-        return "Login failed: " + str(data)
+    # START OPTIONCHAIN BOT
+        subprocess.Popen(["python3","Optionchain.py"])
 
+        print("Optionchain bot started")
+
+        return "Login successful. Bot started."
+
+    return "Login failed"
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80)
