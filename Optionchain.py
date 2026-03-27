@@ -62,7 +62,7 @@ def get_atm_option_symbol(atm):
             if strike != atm:
                 continue
 
-            expiry = datetime.strptime(r["Expiry"], "%Y-%m-%d")
+            expiry = datetime.strptime(r["Expiry"], "%d-%b-%Y")
 
             rows.append((expiry, r))
 
