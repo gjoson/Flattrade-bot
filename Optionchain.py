@@ -52,7 +52,7 @@ def load_tokens():
             if row["Symbol"] != "NIFTY":
                 continue
 
-            if row["Expiry"] != expiry_str:
+            if row["Expiry"] != nearest_expiry:
                 continue
 
             opt = row["Optiontype"]
