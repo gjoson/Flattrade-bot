@@ -38,7 +38,7 @@ def get_nifty():
 
     return float(data["lp"])
 
-CONTRACT_FILE = "NFO_Index_Derivatives.csv"
+CONTRACT_FILE = "Nfo_Index_Derivatives.csv"
 
 
 def get_atm_option_symbol(atm):
