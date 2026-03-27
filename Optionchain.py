@@ -92,14 +92,16 @@ def on_open(ws):
         "t": "c",
         "uid": CLIENT_ID,
         "actid": CLIENT_ID,
-        "accesstoken": TOKEN
+        "accesstoken": TOKEN,
+        "source": "API"
     }
 
     ws.send(json.dumps(login))
 
 
 def on_message(ws,message):
-
+    print("WS:", message)
+    
     data = json.loads(message)
 
     if data.get("t") == "ck":
@@ -120,7 +122,7 @@ def on_message(ws,message):
         threading.Thread(target=heartbeat,args=(ws,),daemon=True).start()
 
 
-    if data.get("lp"):
+    if data.get("t") in ["tk","tf"]:
 
         strike = data.get("strprc")
         ltp = data.get("lp")
@@ -158,4 +160,4 @@ ws = websocket.WebSocketApp(
     on_close=on_close
 )
 
-ws.run_forever()
+ws.run_forever(ping_interval=20, ping_timeout=10)
