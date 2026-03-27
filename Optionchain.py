@@ -127,25 +127,41 @@ def get_chain_tokens(atm):
 # Print Option Chain
 # -----------------------------------
 
-def print_chain():
+if side == "CE":
 
-    print("\nStrike  CE_LTP  CE_IV  CE_DELTA   PE_LTP  PE_IV  PE_DELTA")
+    option_chain[strike]["CE_LTP"] = data.get("lp")
+    option_chain[strike]["CE_IV"] = data.get("iv")
+    option_chain[strike]["CE_DELTA"] = data.get("delta")
 
-    for strike in sorted(option_chain):
+else:
 
-        row = option_chain[strike]
+    option_chain[strike]["PE_LTP"] = data.get("lp")
+    option_chain[strike]["PE_IV"] = data.get("iv")
+    option_chain[strike]["PE_DELTA"] = data.get("delta")
 
-        print(
-            strike,
-            row["CE_LTP"],
-            row["CE_IV"],
-            row["CE_DELTA"],
-            row["PE_LTP"],
-            row["PE_IV"],
-            row["PE_DELTA"]
-        )
+def display_loop():
 
+    while True:
 
+        time.sleep(1)
+
+        print("\033c", end="")   # clear terminal
+
+        print("Strike  CE_LTP  CE_IV  CE_DELTA   PE_LTP  PE_IV  PE_DELTA")
+
+        for strike in sorted(option_chain):
+
+            row = option_chain[strike]
+
+            print(
+                strike,
+                row["CE_LTP"],
+                row["CE_IV"],
+                row["CE_DELTA"],
+                row["PE_LTP"],
+                row["PE_IV"],
+                row["PE_DELTA"]
+            )
 # -----------------------------------
 # Heartbeat
 # -----------------------------------
@@ -248,6 +264,8 @@ nifty = get_nifty()
 ATM = int(round(nifty/50)*50)
 
 print("NIFTY:",nifty,"ATM:",ATM)
+
+threading.Thread(target=display_loop, daemon=True).start()
 
 ws = websocket.WebSocketApp(
     WS_URL,
