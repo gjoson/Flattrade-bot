@@ -4,6 +4,7 @@ import time
 import websocket
 import threading
 import csv
+from datetime import datetime
 
 CLIENT_ID = "FZ37970"
 TOKEN = open("token.txt").read().strip()
