@@ -3,6 +3,7 @@ import json
 import time
 import websocket
 import threading
+import csv
 
 CLIENT_ID = "FZ37970"
 TOKEN = open("token.txt").read().strip()
@@ -37,17 +38,51 @@ def get_nifty():
 
     return float(data["lp"])
 
+CONTRACT_FILE = "NFO_Index_Derivatives.csv"
+
+
+def get_atm_option_symbol(atm):
+
+    rows = []
+
+    with open(CONTRACT_FILE) as f:
+        reader = csv.DictReader(f)
+
+        for r in reader:
+
+            if r["Symbol"] != "NIFTY":
+                continue
+
+            if r["Optiontype"] != "CE":
+                continue
+
+            strike = int(float(r["Strike"]))
+
+            if strike != atm:
+                continue
+
+            expiry = datetime.strptime(r["Expiry"], "%Y-%m-%d")
+
+            rows.append((expiry, r))
+
+    rows.sort()
+
+    nearest = rows[0][1]
+
+    return nearest["Tradingsymbol"]
 
 # -----------------------------------
 # Get option chain tokens
 # -----------------------------------
 
 def get_chain_tokens(atm):
+    tsym = get_atm_option_symbol(atm)
 
+    print("Using tsym:", tsym)
     jdata = {
         "uid": CLIENT_ID,
         "exch": "NFO",
-        "tsym": "NIFTY INDEX",
+        "tsym": tsym,
         "strprc": str(atm),
         "cnt": "10"
     }
