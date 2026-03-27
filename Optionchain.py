@@ -52,7 +52,7 @@ def get_chain_tokens(atm):
         "cnt": "10"
     }
 
-    body = f"jData={json.dumps(jdata)}&jKey={TOKEN}
+    body = f"jData={json.dumps(jdata)}&jKey={TOKEN}"
 
     r = requests.post(CHAIN_URL,data=body,headers=HEADERS)
 
