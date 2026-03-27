@@ -127,6 +127,8 @@ def get_chain_tokens(atm):
 # Print Option Chain
 # -----------------------------------
 
+strike, side = token_to_strike[token]
+
 if side == "CE":
 
     option_chain[strike]["CE_LTP"] = data.get("lp")
@@ -227,8 +229,6 @@ def on_message(ws,message):
 
         if token not in token_to_strike:
             return
-
-        strike,side = token_to_strike[token]
 
         if side == "CE":
 
