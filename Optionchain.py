@@ -96,7 +96,7 @@ def get_chain_tokens(atm):
     data = r.json()
 
     if DEBUG:
-    print("OptionChain response:")
+        print("OptionChain response:")
     print(json.dumps(data, indent=2))
 
     print("Unique strikes:", len(option_chain))
