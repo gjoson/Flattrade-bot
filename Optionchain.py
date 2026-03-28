@@ -5,6 +5,7 @@ import websocket
 import threading
 import csv
 from datetime import datetime
+DEBUG = True
 
 CLIENT_ID = "FZ37970"
 TOKEN = open("token.txt").read().strip()
@@ -93,6 +94,11 @@ def get_chain_tokens(atm):
     r = requests.post(CHAIN_URL,data=body,headers=HEADERS)
 
     data = r.json()
+
+    if DEBUG:
+    print("OptionChain response:")
+    print(json.dumps(data, indent=2))
+
     print("Unique strikes:", len(option_chain))
     tokens = []
 
@@ -132,6 +138,9 @@ def display_loop():
     while True:
 
         time.sleep(1)
+        
+        if DEBUG:
+            continue
 
         print("\033c", end="")   # clear terminal
 
@@ -182,10 +191,11 @@ def on_open(ws):
 
 
 def on_message(ws,message):
+    
+    if DEBUG:
+        print("WS:", message)
 
     data = json.loads(message)
-
-    print("WS:",data)
 
     if data.get("t") in ["ak","ck"]:
 
