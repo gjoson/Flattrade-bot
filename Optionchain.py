@@ -249,7 +249,13 @@ def on_message(ws,message):
 
         strike, opttype = token_to_strike[token]
 
-        # IMPORTANT SAFETY CHECK
+        # Update LTP first
+        if opttype == "CE":
+            option_chain[strike]["CE_LTP"] = ltp
+        else:
+            option_chain[strike]["PE_LTP"] = ltp
+
+        # Only compute Greeks if spot + expiry exist
         if nifty_spot is None or expiry is None:
             return
         
@@ -260,8 +266,8 @@ def on_message(ws,message):
 
              iv, d = calculate_greeks(nifty_spot, strike, ltp, expiry, "CE")
 
-        option_chain[strike]["CE_IV"] = iv
-        option_chain[strike]["CE_DELTA"] = d
+             option_chain[strike]["CE_IV"] = iv
+             option_chain[strike]["CE_DELTA"] = d
 
 
         # PUT option
@@ -271,8 +277,8 @@ def on_message(ws,message):
 
              iv, d = calculate_greeks(nifty_spot, strike, ltp, expiry, "PE")
 
-        option_chain[strike]["PE_IV"] = iv
-        option_chain[strike]["PE_DELTA"] = d
+             option_chain[strike]["PE_IV"] = iv
+             option_chain[strike]["PE_DELTA"] = d
 
 
 def on_error(ws,error):
