@@ -4,11 +4,16 @@ from Login import CLIENT_ID, TOKEN, HEADERS
 
 LIMITS_URL = "https://piconnect.flattrade.in/PiConnectAPI/Limits"
 
+session = json.load(open("session.json"))
+
+CLIENT_ID = session["client_id"]
+TOKEN = session["token"]
+
 def get_limits():
 
     jdata = {
-        "uid": client,
-        "actid": client 
+        "uid": CLIENT_ID,
+        "actid": CLIENT_ID 
     }
 
     body = f"jData={json.dumps(jdata)}&jKey={TOKEN}"
