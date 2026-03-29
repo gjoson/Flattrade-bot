@@ -191,7 +191,6 @@ def on_message(ws,message):
     
     if DEBUG:
         print("WS:", message)
-        print(data.get("ts"))
 
     data = json.loads(message)
 
