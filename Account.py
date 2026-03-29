@@ -16,9 +16,6 @@ def get_limits():
 
     data = r.json()
 
-if __name__ == "__main__":
-    get_limits()
-
     if data.get("stat") != "Ok":
         print("Limits error:", data)
         return
@@ -34,3 +31,6 @@ if __name__ == "__main__":
     print("Margin Used:", margin_used)
     print("Realized PnL:", pnl_realized)
     print("Unrealized PnL:", pnl_unrealized)
+
+if __name__ == "__main__":
+    get_limits()
