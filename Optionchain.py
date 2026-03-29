@@ -249,6 +249,10 @@ def on_message(ws,message):
 
         strike, opttype = token_to_strike[token]
 
+        # IMPORTANT SAFETY CHECK
+        if nifty_spot is None or expiry is None:
+        return
+        
         # CALL option
         if opttype == "CE":
 
