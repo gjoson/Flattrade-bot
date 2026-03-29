@@ -37,8 +37,8 @@ def callback():
 
     global CLIENT_ID, TOKEN
 
-    CLIENT_ID = data["actid"]
-    TOKEN = data["accesstoken"]
+    client_id = data["actid"]
+    token = data["accesstoken"]
 
     with open("session.json","w") as f:
     json.dump({
