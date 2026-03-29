@@ -103,7 +103,7 @@ def get_chain_tokens(atm):
     
     tokens = []
 
-for r in data.get("values", []):
+    for r in data.get("values", []):
 
     strike = int(float(r["strprc"]))
     opttype = r["optt"]     # CE or PE
