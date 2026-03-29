@@ -41,7 +41,7 @@ def callback():
     token = data["accesstoken"]
 
     with open("session.json","w") as f:
-    json.dump({
+      json.dump({
         "client_id": client_id,
         "token": token
     }, f)
