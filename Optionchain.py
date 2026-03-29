@@ -222,7 +222,6 @@ def on_message(ws,message):
 
         threading.Thread(target=heartbeat,args=(ws,),daemon=True).start()
 
-
     if data.get("t") in ["tk","tf"]:
 
         token = data.get("tk")
