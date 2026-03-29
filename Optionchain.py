@@ -274,6 +274,14 @@ def on_message(ws, message):
             expiry = extract_expiry(tsym)
             print("Detected expiry:", expiry)
 
+        # -----------------
+        # UPDATE LTP FIRST
+        # -----------------
+        if opttype == "CE":
+            option_chain[strike]["CE_LTP"] = ltp
+        else:
+            option_chain[strike]["PE_LTP"] = ltp
+        
         # safety check
         if nifty_spot is None or expiry is None:
             return
