@@ -5,7 +5,7 @@ import websocket
 import threading
 import csv
 from datetime import datetime
-DEBUG = True
+DEBUG = False
 
 CLIENT_ID = "FZ37970"
 TOKEN = open("token.txt").read().strip()
@@ -100,31 +100,28 @@ def get_chain_tokens(atm):
     print(json.dumps(data, indent=2))
 
     print("Unique strikes:", len(option_chain))
+    
     tokens = []
 
-    if "values" not in data:
-        print("Option chain error:",data)
-        return tokens
+for r in data.get("values", []):
 
-    for row in data["values"]:
+    strike = int(float(r["strprc"]))
+    opttype = r["optt"]     # CE or PE
+    token = r["token"]
 
-        strike = int(float(row["strprc"]))
-
-    token = row["token"]
-    opttype = row["optt"]   # CE or PE
     if strike not in option_chain:
         option_chain[strike] = {
-            "CE_LTP":None,
-            "CE_IV":None,
-            "CE_DELTA":None,
-            "PE_LTP":None,
-            "PE_IV":None,
-            "PE_DELTA":None
+            "CE_LTP": None,
+            "CE_IV": None,
+            "CE_DELTA": None,
+            "PE_LTP": None,
+            "PE_IV": None,
+            "PE_DELTA": None
         }
 
-        token_to_strike[token] = (strike,opttype)
+    token_to_strike[token] = (strike, opttype)
 
-        tokens.append("NFO|" + token)
+    tokens.append("NFO|" + token)
 
     return tokens
 
@@ -239,8 +236,6 @@ def on_message(ws,message):
             option_chain[strike]["PE_LTP"] = data.get("lp")
             option_chain[strike]["PE_IV"] = data.get("iv")
             option_chain[strike]["PE_DELTA"] = data.get("delta")
-
-        print_chain()
 
 
 def on_error(ws,error):
