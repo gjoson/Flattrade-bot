@@ -1,14 +1,14 @@
 import requests
 import json
-from Login import CLIENT_ID, TOKEN, HEADERS
+from Login import client, token, HEADERS
 
 LIMITS_URL = "https://piconnect.flattrade.in/PiConnectAPI/Limits"
 
 def get_limits():
 
     jdata = {
-        "uid": CLIENT_ID,
-        "actid": CLIENT_ID
+        "uid": client,
+        "actid": client 
     }
 
     body = f"jData={json.dumps(jdata)}&jKey={TOKEN}"
