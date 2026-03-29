@@ -6,7 +6,7 @@ import threading
 import csv
 from datetime import datetime
 from Greeks import calculate_greeks
-DEBUG = False 
+DEBUG = True
 
 nifty_spot = None
 CLIENT_ID = "FZ37970"
