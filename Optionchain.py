@@ -5,7 +5,7 @@ import websocket
 import threading
 import csv
 from datetime import datetime
-DEBUG = False
+DEBUG = True
 
 nifty_spot = None
 CLIENT_ID = "FZ37970"
