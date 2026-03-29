@@ -7,6 +7,7 @@ import csv
 from datetime import datetime
 DEBUG = False
 
+nifty_spot = None
 CLIENT_ID = "FZ37970"
 TOKEN = open("token.txt").read().strip()
 
@@ -193,6 +194,11 @@ def on_message(ws,message):
         print("WS:", message)
 
     data = json.loads(message)
+    
+    if data.get("tk") == "26000":
+        global nifty_spot
+        nifty_spot = float(data["lp"])
+        return
 
     if data.get("t") in ["ak","ck"]:
 
@@ -204,6 +210,7 @@ def on_message(ws,message):
             print("No tokens received")
             return
 
+        tokens.append("NSE|26000")
         sub = {
             "t":"t",
             "k":"#".join(tokens)
