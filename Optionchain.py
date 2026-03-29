@@ -5,7 +5,7 @@ import websocket
 import threading
 import csv
 from datetime import datetime
-DEBUG = False
+DEBUG = True
 
 CLIENT_ID = "FZ37970"
 TOKEN = open("token.txt").read().strip()
@@ -191,6 +191,7 @@ def on_message(ws,message):
     
     if DEBUG:
         print("WS:", message)
+        print(data.get("ts"))
 
     data = json.loads(message)
 
