@@ -40,6 +40,12 @@ def callback():
     CLIENT_ID = data["actid"]
     TOKEN = data["accesstoken"]
 
+    with open("session.json","w") as f:
+    json.dump({
+        "client_id": client_id,
+        "token": token
+    }, f)
+
     if data.get("stat") == "Ok":
         token = data["token"]
 
