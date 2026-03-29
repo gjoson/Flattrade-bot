@@ -16,6 +16,9 @@ def get_limits():
 
     data = r.json()
 
+    if __name__ == "__main__":
+    get_limits()
+
     if data.get("stat") != "Ok":
         print("Limits error:", data)
         return
