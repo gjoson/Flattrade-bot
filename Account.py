@@ -1,5 +1,6 @@
 import requests
 import json
+from Login import CLIENT_ID, TOKEN, HEADERS
 
 LIMITS_URL = "https://piconnect.flattrade.in/PiConnectAPI/Limits"
 
