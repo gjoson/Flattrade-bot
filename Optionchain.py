@@ -251,7 +251,7 @@ def on_message(ws,message):
 
         # IMPORTANT SAFETY CHECK
         if nifty_spot is None or expiry is None:
-        return
+            return
         
         # CALL option
         if opttype == "CE":
