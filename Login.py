@@ -35,6 +35,11 @@ def callback():
 
     print("TOKEN RESPONSE:", data)
 
+    global CLIENT_ID, TOKEN
+
+    CLIENT_ID = data["actid"]
+    TOKEN = data["accesstoken"]
+
     if data.get("stat") == "Ok":
         token = data["token"]
 
