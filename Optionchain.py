@@ -21,7 +21,20 @@ WS_URL = "wss://piconnect.flattrade.in/PiConnectWSAPI/"
 
 option_chain = {}
 token_to_strike = {}
+expiry = None
 
+def extract_expiry(tsym):
+
+    import re
+
+    match = re.search(r"\d{2}[A-Z]{3}\d{2}", tsym)
+
+    if match:
+        exp = match.group()
+
+        return datetime.strptime(exp, "%d%b%y")
+
+    return None
 # -----------------------------------
 # Get NIFTY price
 # -----------------------------------
@@ -224,7 +237,13 @@ def on_message(ws,message):
         threading.Thread(target=heartbeat,args=(ws,),daemon=True).start()
 
     if data.get("t") == "tk":
+        tsym = data["ts"]
 
+        global expiry
+        if expiry is None:
+            expiry = extract_expiry(tsym)
+            print("Detected expiry:", expiry)
+       
         token = data["tk"]
         ltp = float(data["lp"])
 
