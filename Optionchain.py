@@ -202,19 +202,25 @@ def on_open(ws):
     ws.send(json.dumps(login))
 
 
-def on_message(ws,message):
-    
+def on_message(ws, message):
+
     if DEBUG:
         print("WS:", message)
 
     data = json.loads(message)
-    
-    if data.get("tk") == "26000":
+
+    # -------------------------
+    # NIFTY spot update
+    # -------------------------
+    if data.get("tk") == "26000" and "lp" in data:
         global nifty_spot
         nifty_spot = float(data["lp"])
         return
 
-    if data.get("t") in ["ak","ck"]:
+    # -------------------------
+    # Login success
+    # -------------------------
+    if data.get("t") in ["ak", "ck"]:
 
         print("Login success")
 
@@ -225,60 +231,90 @@ def on_message(ws,message):
             return
 
         tokens.append("NSE|26000")
+
         sub = {
-            "t":"t",
-            "k":"#".join(tokens)
+            "t": "t",
+            "k": "#".join(tokens)
         }
 
         ws.send(json.dumps(sub))
 
-        print("Subscribed:",len(tokens),"tokens")
+        print("Subscribed:", len(tokens), "tokens")
 
-        threading.Thread(target=heartbeat,args=(ws,),daemon=True).start()
+        threading.Thread(
+            target=heartbeat,
+            args=(ws,),
+            daemon=True
+        ).start()
 
+        return
+
+
+    # -------------------------
+    # Option tick
+    # -------------------------
     if data.get("t") == "tk":
-        tsym = data["ts"]
 
-        global expiry
-        if expiry is None:
-            expiry = extract_expiry(tsym)
-            print("Detected expiry:", expiry)
-       
-        token = data["tk"]
-        ltp = float(data["lp"])
+        token = data.get("tk")
+
+        if token not in token_to_strike:
+            return
 
         strike, opttype = token_to_strike[token]
 
-        # Update LTP first
-        if opttype == "CE":
-            option_chain[strike]["CE_LTP"] = ltp
-        else:
-            option_chain[strike]["PE_LTP"] = ltp
+        if "lp" not in data:
+            return
 
-        # Only compute Greeks if spot + expiry exist
+        ltp = float(data["lp"])
+
+        # detect expiry once
+        global expiry
+        if expiry is None:
+            tsym = data.get("ts")
+            expiry = extract_expiry(tsym)
+            print("Detected expiry:", expiry)
+
+        # safety check
         if nifty_spot is None or expiry is None:
             return
-        
+
+
+        # -------------------------
         # CALL option
+        # -------------------------
         if opttype == "CE":
 
-             option_chain[strike]["CE_LTP"] = ltp
+            option_chain[strike]["CE_LTP"] = ltp
 
-             iv, d = calculate_greeks(nifty_spot, strike, ltp, expiry, "CE")
+            iv, d = calculate_greeks(
+                nifty_spot,
+                strike,
+                ltp,
+                expiry,
+                "CE"
+            )
 
-             option_chain[strike]["CE_IV"] = iv
-             option_chain[strike]["CE_DELTA"] = d
+            option_chain[strike]["CE_IV"] = iv
+            option_chain[strike]["CE_DELTA"] = d
 
 
+        # -------------------------
         # PUT option
-        if opttype == "PE":
+        # -------------------------
+        elif opttype == "PE":
 
-             option_chain[strike]["PE_LTP"] = ltp
+            option_chain[strike]["PE_LTP"] = ltp
 
-             iv, d = calculate_greeks(nifty_spot, strike, ltp, expiry, "PE")
+            iv, d = calculate_greeks(
+                nifty_spot,
+                strike,
+                ltp,
+                expiry,
+                "PE"
+            )
 
-             option_chain[strike]["PE_IV"] = iv
-             option_chain[strike]["PE_DELTA"] = d
+            option_chain[strike]["PE_IV"] = iv
+            option_chain[strike]["PE_DELTA"] = d
 
 
 def on_error(ws,error):
