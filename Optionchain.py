@@ -222,26 +222,33 @@ def on_message(ws,message):
 
         threading.Thread(target=heartbeat,args=(ws,),daemon=True).start()
 
-    if data.get("t") in ["tk","tf"]:
+    if data.get("t") == "tk":
 
-        token = data.get("tk")
+        token = data["tk"]
+        ltp = float(data["lp"])
 
-        if token not in token_to_strike:
-            return
+        strike, opttype = token_to_strike[token]
 
-        strike, side = token_to_strike[token]
+        # CALL option
+        if opttype == "CE":
 
-        if side == "CE":
+             option_chain[strike]["CE_LTP"] = ltp
 
-            option_chain[strike]["CE_LTP"] = data.get("lp")
-            option_chain[strike]["CE_IV"] = data.get("iv")
-            option_chain[strike]["CE_DELTA"] = data.get("delta")
+             iv, d = calculate_greeks(nifty_spot, strike, ltp, expiry, "CE")
 
-        else:
+        option_chain[strike]["CE_IV"] = iv
+        option_chain[strike]["CE_DELTA"] = d
 
-            option_chain[strike]["PE_LTP"] = data.get("lp")
-            option_chain[strike]["PE_IV"] = data.get("iv")
-            option_chain[strike]["PE_DELTA"] = data.get("delta")
+
+        # PUT option
+        if opttype == "PE":
+
+             option_chain[strike]["PE_LTP"] = ltp
+
+             iv, d = calculate_greeks(nifty_spot, strike, ltp, expiry, "PE")
+
+        option_chain[strike]["PE_IV"] = iv
+        option_chain[strike]["PE_DELTA"] = d
 
 
 def on_error(ws,error):
