@@ -42,8 +42,8 @@ r = requests.post(
 print("HTTP Status:", r.status_code)
 print("Raw response:", r.text)
 
-    data = r.json()
-    print("\nResponse:", data)
+data = r.json()
+print("\nResponse:", data)
 
 if data.get("stat") != "Ok":
     print("Login failed")
