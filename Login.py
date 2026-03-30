@@ -26,7 +26,7 @@ payload = {
 
 r = requests.post(
     "https://authapi.flattrade.in/trade/apitoken",
-    json=payload
+    data=payload
 )
 
 data = r.json()
