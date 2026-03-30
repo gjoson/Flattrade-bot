@@ -18,25 +18,15 @@ code = input("\nPaste request_code here: ").strip()
 raw = API_KEY + code + API_SECRET
 sha256 = hashlib.sha256(raw.encode()).hexdigest()
 
-jdata = {
+payload = {
     "api_key": API_KEY,
     "request_code": code,
     "api_secret": sha256
 }
 
-payload = {
-    "jData": json.dumps(jdata),
-    "jKey": ""
-}
-
-headers = {
-    "Content-Type": "application/x-www-form-urlencoded"
-}
-
 r = requests.post(
     "https://authapi.flattrade.in/trade/apitoken",
-    headers=headers,
-    data=payload
+    json=payload
 )
 
 print("HTTP Status:", r.status_code)
