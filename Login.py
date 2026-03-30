@@ -28,7 +28,7 @@ body = "jData=" + json.dumps(jdata) + "&jKey="
 
 r = requests.post(
     "https://authapi.flattrade.in/trade/apitoken",
-    data=payload
+    data=body
 )
 
 print("HTTP Status:", r.status_code)
