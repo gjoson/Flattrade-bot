@@ -29,6 +29,9 @@ r = requests.post(
     data=payload
 )
 
+print("HTTP Status:", r.status_code)
+print("Raw response:", r.text)
+
 data = r.json()
 print("\nResponse:", data)
 
