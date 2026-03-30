@@ -34,6 +34,14 @@ def callback():
 
     data = r.json()
 
+    client = data["actid"]
+token = data["access_token"]
+
+with open("token.txt", "w") as f:
+    f.write(f"{client}\n{token}")
+
+print("Token saved to token.txt")
+
     print("Response:", data)
 
     if data.get("stat") != "Ok":
