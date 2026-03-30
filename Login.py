@@ -18,11 +18,13 @@ code = input("\nPaste request_code here: ").strip()
 raw = API_KEY + code + API_SECRET
 sha256 = hashlib.sha256(raw.encode()).hexdigest()
 
-payload = {
+jdata = {
     "api_key": API_KEY,
     "request_code": code,
     "api_secret": sha256
 }
+
+body = "jData=" + json.dumps(jdata) + "&jKey="
 
 r = requests.post(
     "https://authapi.flattrade.in/trade/apitoken",
