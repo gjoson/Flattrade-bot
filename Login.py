@@ -24,10 +24,7 @@ jdata = {
     "api_secret": sha256
 }
 
-body = {
-    "jData": json.dumps(jdata),
-    "jKey": ""
-}
+body = "jData=" + json.dumps(jdata) + "&jKey="
 
 headers = {
     "Content-Type": "application/x-www-form-urlencoded"
@@ -35,15 +32,14 @@ headers = {
 
 r = requests.post(
     "https://authapi.flattrade.in/trade/apitoken",
-    data=body,
-    headers=headers
+    headers=headers,
+    data=body
 )
 
 print("HTTP Status:", r.status_code)
 print("Raw response:", r.text)
 
-data = r.json()
-print("\nResponse:", data)
+data = json.loads(r.text)
 
 if data.get("stat") != "Ok":
     print("Login failed")
