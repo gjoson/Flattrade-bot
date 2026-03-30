@@ -24,7 +24,10 @@ jdata = {
     "api_secret": sha256
 }
 
-body = "jData=" + json.dumps(jdata) + "&jKey="
+payload = {
+    "jData": json.dumps(jdata),
+    "jKey": ""
+}
 
 headers = {
     "Content-Type": "application/x-www-form-urlencoded"
@@ -33,7 +36,7 @@ headers = {
 r = requests.post(
     "https://authapi.flattrade.in/trade/apitoken",
     headers=headers,
-    data=body
+    data=payload
 )
 
 print("HTTP Status:", r.status_code)
