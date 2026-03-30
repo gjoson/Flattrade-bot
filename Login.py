@@ -2,6 +2,7 @@ from flask import Flask, request
 import hashlib
 import requests
 import json
+import os
 
 API_KEY = "971a4014f1984f0cbc85afacfd7816a9"
 API_SECRET = "2026.b3bb2a8e05ab48099082a75ba8f4319518942c662cb31be2"
@@ -35,9 +36,11 @@ def callback():
     data = r.json()
 
     client = data["actid"]
-token = data["access_token"]
+    token = data["access_token"]
+    if os.path.exists("token.txt"):
+       os.remove("token.txt")
 
-with open("token.txt", "w") as f:
+    with open("token.txt", "w") as f:
     f.write(f"{client}\n{token}")
 
 print("Token saved to token.txt")
