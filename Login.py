@@ -1,65 +1,47 @@
-from flask import Flask, request
 import hashlib
 import requests
-import json
-import os
+from urllib.parse import urlparse, parse_qs
 
 API_KEY = "971a4014f1984f0cbc85afacfd7816a9"
 API_SECRET = "2026.b3bb2a8e05ab48099082a75ba8f4319518942c662cb31be2"
 
-app = Flask(__name__)
+print("\nOpen this URL and login:\n")
+print(f"https://auth.flattrade.in/?api_key={API_KEY}")
 
+print("\nAfter login you will be redirected to a URL like:")
+print("https://something?code=XXXX&client=XXXX")
 
-@app.route("/flattrade/callback")
-def callback():
+redirect_url = input("\nPaste the FULL redirect URL here:\n").strip()
 
-    code = request.args.get("code")
-    client = request.args.get("client")
+parsed = urlparse(redirect_url)
+params = parse_qs(parsed.query)
 
-    print("Code:", code)
-    print("Client:", client)
+code = params["code"][0]
+client = params["client"][0]
 
-    raw = API_KEY + code + API_SECRET
-    sha256 = hashlib.sha256(raw.encode()).hexdigest()
+print("\nExtracted values:")
+print("Code:", code)
+print("Client:", client)
 
-    payload = {
-        "api_key": API_KEY,
-        "request_code": code,
-        "api_secret": sha256
-    }
+raw = API_KEY + code + API_SECRET
+sha256 = hashlib.sha256(raw.encode()).hexdigest()
 
-    r = requests.post(
-        "https://authapi.flattrade.in/trade/apitoken",
-        json=payload
-    )
+payload = {
+    "api_key": API_KEY,
+    "request_code": code,
+    "api_secret": sha256
+}
 
-    data = r.json()
+r = requests.post(
+    "https://authapi.flattrade.in/trade/apitoken",
+    data=payload
+)
 
-    client = data["actid"]
-    token = data["access_token"]
-    if os.path.exists("token.txt"):
-       os.remove("token.txt")
+data = r.json()
 
-    with open("token.txt", "w") as f:
-       f.write(f"{client}\n{token}")
+token = data["access_token"]
 
-    print("Token saved to token.txt")
+with open("token.txt", "w") as f:
+    f.write(f"{client}\n{token}")
 
-    print("Response:", data)
-
-    if data.get("stat") != "Ok":
-        return "Login failed"
-
-    session = {
-        "client_id": data["actid"],
-        "token": data["access_token"]
-    }
-
-    with open("session.json", "w") as f:
-        json.dump(session, f)
-
-    return "Login successful. Token saved."
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+print("\nToken saved to token.txt")
