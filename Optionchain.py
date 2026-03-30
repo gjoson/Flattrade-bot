@@ -8,9 +8,12 @@ from datetime import datetime
 from Greeks import calculate_greeks
 DEBUG = False
 
+session = json.load(open("session.json"))
+
+CLIENT_ID = session["client_id"]
+TOKEN = session["token"]
+
 nifty_spot = None
-CLIENT_ID = "FZ37970"
-TOKEN = open("token.txt").read().strip()
 
 QUOTE_URL = "https://piconnect.flattrade.in/PiConnectAPI/GetQuotes"
 CHAIN_URL = "https://piconnect.flattrade.in/PiConnectAPI/GetOptionChain"
