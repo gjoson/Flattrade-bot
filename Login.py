@@ -43,7 +43,7 @@ def callback():
     with open("token.txt", "w") as f:
        f.write(f"{client}\n{token}")
 
-print("Token saved to token.txt")
+    print("Token saved to token.txt")
 
     print("Response:", data)
 
