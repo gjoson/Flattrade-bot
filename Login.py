@@ -1,49 +1,54 @@
+from flask import Flask, request
 import hashlib
 import requests
 import json
 
-# ===== EDIT THESE =====
 API_KEY = "971a4014f1984f0cbc85afacfd7816a9"
 API_SECRET = "2026.b3bb2a8e05ab48099082a75ba8f4319518942c662cb31be2"
-REDIRECT_URL = "https://auth.flattrade.in/?api_key=" + API_KEY
 
-print("\nOpen this URL in browser and login:\n")
-print(REDIRECT_URL)
+app = Flask(__name__)
 
-print("\nAfter login you will be redirected to a URL like:")
-print("https://...?code=XXXX&client=XXXXX")
 
-code = input("\nPaste request_code here: ").strip()
+@app.route("/flattrade/callback")
+def callback():
 
-raw = API_KEY + code + API_SECRET
-sha256 = hashlib.sha256(raw.encode()).hexdigest()
+    code = request.args.get("code")
+    client = request.args.get("client")
 
-payload = {
-    "api_key": API_KEY,
-    "request_code": code,
-    "api_secret": sha256
-}
+    print("Code:", code)
+    print("Client:", client)
 
-r = requests.post(
-    "https://authapi.flattrade.in/trade/apitoken",
-    json=payload
-)
+    raw = API_KEY + code + API_SECRET
+    sha256 = hashlib.sha256(raw.encode()).hexdigest()
 
-print("HTTP Status:", r.status_code)
-print("Raw response:", r.text)
+    payload = {
+        "api_key": API_KEY,
+        "request_code": code,
+        "api_secret": sha256
+    }
 
-data = json.loads(r.text)
+    r = requests.post(
+        "https://authapi.flattrade.in/trade/apitoken",
+        json=payload
+    )
 
-if data.get("stat") != "Ok":
-    print("Login failed")
-    exit()
+    data = r.json()
 
-session = {
-    "client_id": data["actid"],
-    "token": data["accesstoken"]
-}
+    print("Response:", data)
 
-with open("session.json", "w") as f:
-    json.dump(session, f)
+    if data.get("stat") != "Ok":
+        return "Login failed"
 
-print("\nSession saved to session.json")
+    session = {
+        "client_id": data["actid"],
+        "token": data["access_token"]
+    }
+
+    with open("session.json", "w") as f:
+        json.dump(session, f)
+
+    return "Login successful. Token saved."
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)
