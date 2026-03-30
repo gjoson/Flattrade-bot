@@ -32,7 +32,11 @@ r = requests.post(
 print("HTTP Status:", r.status_code)
 print("Raw response:", r.text)
 
-data = r.json()
+try:
+    data = r.json()
+except:
+    print("Invalid JSON returned by API")
+    exit()
 print("\nResponse:", data)
 
 if data.get("stat") != "Ok":
