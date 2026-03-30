@@ -8,10 +8,11 @@ from datetime import datetime
 from Greeks import calculate_greeks
 DEBUG = False
 
-session = json.load(open("session.json"))
+with open("token.txt") as f:
+    lines = f.readlines()
 
-CLIENT_ID = session["client_id"]
-TOKEN = session["token"]
+CLIENT_ID = lines[0].strip()
+TOKEN = lines[1].strip()
 
 nifty_spot = None
 
