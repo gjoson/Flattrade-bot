@@ -41,7 +41,7 @@ def callback():
        os.remove("token.txt")
 
     with open("token.txt", "w") as f:
-    f.write(f"{client}\n{token}")
+       f.write(f"{client}\n{token}")
 
 print("Token saved to token.txt")
 
