@@ -24,7 +24,10 @@ jdata = {
     "api_secret": sha256
 }
 
-body = "jData=" + json.dumps(jdata) + "&jKey="
+body = {
+    "jData": json.dumps(jdata),
+    "jKey": ""
+}
 
 headers = {
     "Content-Type": "application/x-www-form-urlencoded"
@@ -39,12 +42,8 @@ r = requests.post(
 print("HTTP Status:", r.status_code)
 print("Raw response:", r.text)
 
-try:
     data = r.json()
-except:
-    print("Invalid JSON returned by API")
-    exit()
-print("\nResponse:", data)
+    print("\nResponse:", data)
 
 if data.get("stat") != "Ok":
     print("Login failed")
